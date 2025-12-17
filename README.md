@@ -70,7 +70,8 @@ As we can see, the Filtering agent (AKA the agent that is using the search-based
 6% Accuracy improvement and about 10% increase in the accuracy above threshold 0.5 means that the tool selection can work, and by improving the search technique, we might achieve better results.
 
 ## Restrictions 
-I run this program locally using LM-Studio LLM `meta-llama-3.1-8b-instruct-128k` on a M4 mac.
+* I run this program locally using LM-Studio LLM `meta-llama-3.1-8b-instruct-128k` on a M4 Mac.
+* Due to hardware limitations, I used the first 50 tools and tested with the queries that included them. 
 
 ## High-Level Architecture
 ```
