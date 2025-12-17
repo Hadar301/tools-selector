@@ -64,6 +64,11 @@ Normal Agent above threshold accuracy ratio:    64.95%
 Filtering Agent above threshold accuracy ratio: 74.34%
 ```
 
+### Discussion
+As we can see, the Filtering agent (AKA the agent that is using the search-based tools selection) can actually improve the accuracy of the agent when using tools.
+
+6% Accuracy improvement and about 10% increase in the accuracy above threshold 0.5 means that the tool selection can work, and by improving the search technique, we might achieve better results.
+
 ## Restrictions 
 I run this program locally using LM-Studio LLM `meta-llama-3.1-8b-instruct-128k` on a M4 mac.
 
