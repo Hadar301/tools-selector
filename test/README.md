@@ -64,7 +64,7 @@ First, download and process the xLAM dataset:
 
 ```bash
 cd test
-python generate_data.py
+uv run generate_data.py
 ```
 
 This will:
@@ -78,7 +78,7 @@ This will:
 **Run the filtering agent evaluation (default):**
 
 ```bash
-python test_runner.py
+uv run test_runner.py
 ```
 
 **To run the normal agent evaluation**, edit `test_runner.py` and change the `agent_type`:
@@ -93,7 +93,7 @@ evaluator = ToolSelectionEvaluator(agent_type="normal", max_tools=_NUM_TOOLS)
 After running evaluations, analyze the results:
 
 ```bash
-python post_processing.py
+uv run post_processing.py
 ```
 
 This outputs:
