@@ -126,6 +126,7 @@ Agents are restricted to the filtered tool set per request, enforcing correctnes
 * uv package manager
 
 ```
+tools-selector v0.1.0
 ├── datasets v4.4.1
 ├── docx2txt v0.9
 ├── langchain v1.0.8
@@ -136,6 +137,11 @@ Agents are restricted to the filtered tool set per request, enforcing correctnes
 ├── llama-index-llms-openai v0.6.9
 ├── llama-index-llms-openai-like v0.5.3
 ├── loguru v0.7.3
+├── numpy v2.3.5
 ├── openai v2.8.1
-└── pydantic v2.12.4
+├── pandas v2.2.3
+├── pydantic v2.12.4
+├── torch v2.9.1
+├── tqdm v4.67.1
+└── transformers v4.57.1
 ```
