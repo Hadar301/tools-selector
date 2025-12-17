@@ -1,0 +1,20 @@
+[project]
+name = "tools-selector"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = [
+    "datasets>=4.4.1",
+    "docx2txt>=0.9",
+    "langchain>=1.0.8",
+    "langchain-core>=1.1.0",
+    "langchain-openai>=1.0.3",
+    "llama-index>=0.14.8",
+    "llama-index-embeddings-huggingface>=0.6.1",
+    "llama-index-llms-openai>=0.6.9",
+    "llama-index-llms-openai-like>=0.5.3",
+    "loguru>=0.7.3",
+    "openai>=2.8.1",
+    "pydantic>=2.12.4",
+]
