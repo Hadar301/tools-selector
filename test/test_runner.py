@@ -272,7 +272,7 @@ class ToolSelectionEvaluator:
         logger.info(f"Running {len(valid_cases)} test cases with max {max_concurrent} concurrent")
 
         # Create all tasks
-        tasks = [self._eval_case_async(tc, i, semaphore) for i, tc in valid_cases[:10]]
+        tasks = [self._eval_case_async(tc, i, semaphore) for i, tc in valid_cases]
 
         # Run in parallel
         valid_results = []
