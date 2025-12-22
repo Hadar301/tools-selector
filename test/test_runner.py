@@ -20,6 +20,7 @@ logger.add(sys.stderr, level="DEBUG")
 
 _INVOKE_TIMEOUT: int = 360
 
+
 class ToolSelectionEvaluator:
     """Evaluates tool selection performance using xlam test cases"""
 
@@ -81,6 +82,23 @@ class ToolSelectionEvaluator:
                         tool_calls.append(tc["name"])
 
         return list(set(tool_calls))  # avoid duplications
+
+    def _extract_tokens(self, response) -> List[int]:
+        total_prompt = 0
+        total_completion = 0
+
+        message = response["messages"][-1]
+        # for message in response["messages"]:
+        if hasattr(message, "usage_metadata") and message.usage_metadata:
+            usage = message.usage_metadata
+            total_prompt += usage.get("input_tokens", 0)
+            total_completion += usage.get("output_tokens", 0)
+        # Check for response_metadata (alternative location)
+        elif hasattr(message, "response_metadata") and message.response_metadata:
+            usage = message.response_metadata.get("token_usage", {})
+            total_prompt += usage.get("prompt_tokens", 0)
+            total_completion += usage.get("completion_tokens", 0)
+        return [total_prompt, total_completion, total_prompt + total_completion]
 
     def _eval_single_case(self, test_case, n):
         result_single_test = {
@@ -190,6 +208,9 @@ class ToolSelectionEvaluator:
                 "test_pass": False,
                 "accuracy": 0,
                 "difficulty": test_case["difficulty"],
+                "prompt_tokens": 0,
+                "completion_tokens": 0,
+                "total_tokens": 0,
             }
 
             query = test_case["query"]
@@ -198,8 +219,8 @@ class ToolSelectionEvaluator:
             try:
                 start_time = time()
                 response = await asyncio.wait_for(
-                    self.agent.ainvoke({"messages": [("user", query)]}),
-                    timeout=_INVOKE_TIMEOUT)
+                    self.agent.ainvoke({"messages": [("user", query)]}), timeout=_INVOKE_TIMEOUT
+                )
                 end_time = time()
             except asyncio.TimeoutError:
                 logger.error(f"Timeout Error occured in test #{n} with id: {test_case['id']}")
@@ -209,10 +230,15 @@ class ToolSelectionEvaluator:
                 return result
 
             selected_tools = self._extract_tool_calls(response)
+            token_usage = self._extract_tokens(response)
 
             result["total_time"] = end_time - start_time
             result["test_tools"] = list(expected_tools)
             result["used_tools"] = selected_tools
+
+            result["prompt_tokens"] = token_usage[0]
+            result["completion_tokens"] = token_usage[1]
+            result["total_tokens"] = token_usage[2]
 
             if not expected_tools and not selected_tools:
                 result["test_pass"] = True
@@ -224,6 +250,7 @@ class ToolSelectionEvaluator:
                     result["test_pass"] = True
 
             return result
+
     async def run_parallel_evaluation(self, max_concurrent: int = 5):
         """Run evaluation with parallel async calls"""
         if not self._load_eval_data():
@@ -235,18 +262,17 @@ class ToolSelectionEvaluator:
 
         # Filter valid test cases
         valid_cases = [
-            (i, tc) for i, tc in enumerate(all_cases)
-            if len(set(tc["expected_tools"]).intersection(set(all_tools))) == len(set(tc["expected_tools"]))
+            (i, tc)
+            for i, tc in enumerate(all_cases)
+            if len(set(tc["expected_tools"]).intersection(set(all_tools)))
+            == len(set(tc["expected_tools"]))
             or len(tc["expected_tools"]) == 0
         ]
 
         logger.info(f"Running {len(valid_cases)} test cases with max {max_concurrent} concurrent")
 
         # Create all tasks
-        tasks = [
-            self._eval_case_async(tc, i, semaphore)
-            for i, tc in valid_cases
-        ]
+        tasks = [self._eval_case_async(tc, i, semaphore) for i, tc in valid_cases[:10]]
 
         # Run in parallel
         valid_results = []
@@ -254,12 +280,9 @@ class ToolSelectionEvaluator:
             result = await coro
             if not isinstance(result, Exception) and result["total_time"] != -1:
                 valid_results.append(result)
-
+                self.update_resuls([result])
 
         logger.info(f"Completed {len(valid_results)} successful tests")
-        if len(valid_results) > 0:
-            self.update_resuls(valid_results)
- 
 
 
 if __name__ == "__main__":
