@@ -2,7 +2,7 @@ import sys
 from functools import lru_cache
 from typing import Any, Awaitable, Callable, Dict, List, Sequence
 
-import pandas as pd
+import numpy as np
 import requests
 import torch
 from langchain.agents import AgentState, create_agent
@@ -14,6 +14,7 @@ from langchain_openai import ChatOpenAI
 from tools_embeddings import get_generated_tools, get_tools_embeddings
 
 sys.path.append("../../tools-selector")
+from bm_search import get_search_engine
 from embeddings import cosine_similarity, embed_text
 
 _NUM_TOOLS: int = 50
@@ -21,9 +22,12 @@ _NUM_TOOLS: int = 50
 _TOOLS_EMBEDDINGS: Dict[str, torch.Tensor] = get_tools_embeddings()
 _all_tools_embeds = torch.stack(list(_TOOLS_EMBEDDINGS.values())).squeeze(1)
 _all_tools = list(_TOOLS_EMBEDDINGS.keys())
+_all_tools_desc = [t.description for t in get_generated_tools()[:_NUM_TOOLS]]
 
 if _NUM_TOOLS != -1:
     _TOOLS_EMBEDDINGS = dict(list(_TOOLS_EMBEDDINGS.items())[:_NUM_TOOLS])
+
+_SEARCH_ENGINE = get_search_engine(tools_desc=_all_tools_desc)
 
 _BASE_URL = "http://localhost:1234/v1"
 _API_KEY = "lm-studio"
@@ -85,10 +89,10 @@ def get_human_content(messages) -> Sequence[str]:
             return m.content
 
 
-def process_scores(scores: torch.Tensor) -> torch.Tensor:
-    scores = torch.where(scores < 0.1, 0, scores) # filter scores with "low energy"
+def process_scores(scores: np.ndarray, min_keep_thres: float = 0.1) -> np.ndarray:
+    scores = np.where(scores < min_keep_thres, 0, scores)  # filter scores with "low energy"
 
-    if not torch.all(scores == 0):
+    if not np.all(scores == 0):
         normalized_scores = (scores - scores.min()) / (scores.max() - scores.min())
     else:
         normalized_scores = scores
@@ -96,7 +100,7 @@ def process_scores(scores: torch.Tensor) -> torch.Tensor:
 
 
 @lru_cache(maxsize=128)
-def find_top_tools(human_message: Sequence[str], threshold: float = 0.25) -> List[str]:
+def find_top_tools_embeddings(human_message: str, threshold: float = 0.25) -> List[str]:
     # all_tools_embeds = torch.stack(list(_TOOLS_EMBEDDINGS.values())).squeeze(1)
     # all_tools = list(_TOOLS_EMBEDDINGS.keys())
     human_message_embed = embed_text(human_message)
@@ -104,9 +108,21 @@ def find_top_tools(human_message: Sequence[str], threshold: float = 0.25) -> Lis
 
     similarity_scores = cosine_similarity(human_message_embed, _all_tools_embeds)
     # print(similarity_scores)
-    normalized_scores = process_scores(similarity_scores)
+    normalized_scores = process_scores(similarity_scores.numpy())
     # print(normalized_scores)
-    indices = torch.where(normalized_scores >= threshold)[0]
+    indices = np.where(normalized_scores >= threshold)[0]
+    return [_all_tools[i] for i in indices.tolist()]
+
+
+@lru_cache(maxsize=128)
+def find_top_tools_bm_search(human_message: str, threshold: float = 0.25) -> List[str]:
+    human_message_tokenized = human_message.split(" ")
+    scores = _SEARCH_ENGINE.get_scores(human_message_tokenized)
+    # print(f"total scores: {len(scores)} max score: {np.max(scores)}")
+    normalized_scores = process_scores(scores)
+
+    indices = np.where(normalized_scores >= threshold)[0]
+    # print(f"all idexes: {indices}")
     return [_all_tools[i] for i in indices.tolist()]
 
 
@@ -120,7 +136,8 @@ def filter_request_tools(
 def filter_tools(request, handler):
     messages = getattr(request, "messages", [])
     human_message = get_human_content(messages)
-    top_tools = find_top_tools(human_message)
+    # top_tools = find_top_tools_embeddings(human_message)
+    top_tools = find_top_tools_bm_search(human_message)
     req_tools = getattr(request, "tools", [])
     filtered_request_tools = filter_request_tools(req_tools, top_tools)
     setattr(request, "tools", filtered_request_tools)
@@ -129,11 +146,13 @@ def filter_tools(request, handler):
     return handler(request)
 
 
-@wrap_model_call # type: ignore[misc]
+@wrap_model_call  # type: ignore[misc]
 async def filter_tools_async(request: Any, handler: Callable[[Any], Awaitable[Any]]) -> Any:
     messages = getattr(request, "messages", [])
     human_message = get_human_content(messages)
-    top_tools = find_top_tools(human_message)
+    # top_tools = find_top_tools_embeddings(human_message)
+    top_tools = find_top_tools_bm_search(human_message, threshold=0.7)
+    # print(len(top_tools))
     req_tools = getattr(request, "tools", [])
     filtered_request_tools = filter_request_tools(req_tools, top_tools)
     setattr(request, "tools", filtered_request_tools)
