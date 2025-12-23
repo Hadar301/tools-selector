@@ -276,13 +276,20 @@ class ToolSelectionEvaluator:
 
         # Run in parallel
         valid_results = []
+        valid_res_counter = 0
         for coro in tqdm.as_completed(tasks, total=len(tasks), desc="Evaluating"):
             result = await coro
             if not isinstance(result, Exception) and result["total_time"] != -1:
                 valid_results.append(result)
-                self.update_resuls([result])
+                valid_res_counter +=1
+                if len(valid_results) > 20:
+                    logger.info("Writing batch to file...")
+                    self.update_resuls(valid_results)
+                    valid_results = []
+        if valid_results:
+            self.update_resuls(valid_results) 
 
-        logger.info(f"Completed {len(valid_results)} successful tests")
+        logger.info(f"Completed {valid_res_counter} successful tests")
 
 
 if __name__ == "__main__":
