@@ -9,8 +9,6 @@ _MODEL = AutoModel.from_pretrained(_MODEL_NAME)
 
 os.environ["TOKENIZERS_PARALLELISM"] = "false"
 
-_DEIVCE = "mps" if torch.backends.mps.is_available() else "cpu" # TODO: use cuda
-print(f"device {_DEIVCE} is available")
 # print(help(_TOKENIZER.__call__))
 
 
@@ -23,8 +21,6 @@ def embed_text(txt: str) -> torch.Tensor:
 
 
 def cosine_similarity(embed_vec1: torch.Tensor, embed_vec2: torch.Tensor) -> torch.Tensor:
-    embed_vec1.to(_DEIVCE)
-    embed_vec2.to(_DEIVCE)
     return torch.cosine_similarity(embed_vec1, embed_vec2)
 
 
