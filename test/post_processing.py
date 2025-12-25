@@ -33,6 +33,14 @@ def calculate_accruacy_above_thresh_ratio(file_path: str, threshold: float) -> n
     return np.sum(above_accoracies) / len(above_accoracies)
 
 
+def calculate_mean_tokens(file_path: str) -> np.float32:
+    with open(file_path, "r") as f:
+        results = json.load(f)
+
+    tokens = np.array([r["total_tokens"] for r in results])
+    return np.mean(tokens, axis=0)
+
+
 if __name__ == "__main__":
     normal_acc = calculate_mean_accuracy(res_file1_path)
     filtering_acc = calculate_mean_accuracy(res_file2_path)
@@ -42,13 +50,21 @@ if __name__ == "__main__":
 
     threshold = 0.5
     normal_thresh_acc_ratio = calculate_accruacy_above_thresh_ratio(res_file1_path, threshold)
-    filtering_thresh_acc_ratio = calculate_accruacy_above_thresh_ratio(res_file2_path, threshold)    
+    filtering_thresh_acc_ratio = calculate_accruacy_above_thresh_ratio(res_file2_path, threshold)
 
-    print(f"Normal Agent Mean Accuracy:    {normal_acc*100:.4f}")
-    print(f"Filtering Agent Mean Accuracy: {filtering_acc*100:.4f}")
+    normal_avg_total_tokens = calculate_mean_tokens(res_file1_path)
+    filtering_avg_total_tokens = calculate_mean_tokens(res_file2_path)
 
-    print(f"Normal Agent test pass to all tests ratio: {normal_tst_pass_ratio*100:.4f}")
-    print(f"Filtering Agent test pass to all tests ratio: {filtering_tst_pass_ratio*100:.4f}")
+    print(f"Normal Agent Mean Accuracy:    {normal_acc * 100:.4f}")
+    print(f"Filtering Agent Mean Accuracy: {filtering_acc * 100:.4f}")
 
-    print(f"Normal Agent above threshold accuracy ratio:    {normal_thresh_acc_ratio*100:.4f}")
-    print(f"Filtering Agent above threshold accuracy ratio: {filtering_thresh_acc_ratio*100:.4f}")
+    print(f"Normal Agent test pass to all tests ratio: {normal_tst_pass_ratio * 100:.4f}")
+    print(f"Filtering Agent test pass to all tests ratio: {filtering_tst_pass_ratio * 100:.4f}")
+
+    print(f"Normal Agent above threshold accuracy ratio:    {normal_thresh_acc_ratio * 100:.4f}")
+    print(
+        f"Filtering Agent above threshold accuracy ratio: {filtering_thresh_acc_ratio * 100:.4f}"
+    )
+
+    print(f"Normal Agent Mean Total tokens:    {normal_avg_total_tokens :.4f}")
+    print(f"Filtering Agent Mean Total tokens: {filtering_avg_total_tokens :.4f}")
