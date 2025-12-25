@@ -1,9 +1,10 @@
 import asyncio
 import json
 import os
+import random
 import sys
 from time import time
-from typing import List
+from typing import Any, List
 
 from agent_tool_calling_init import (
     _NUM_TOOLS,
@@ -18,7 +19,11 @@ logger.remove()
 
 logger.add(sys.stderr, level="DEBUG")
 
+random.seed(42)
+
 _INVOKE_TIMEOUT: int = 360
+
+_TEST_LIMIT: int = 250
 
 
 class ToolSelectionEvaluator:
@@ -271,23 +276,30 @@ class ToolSelectionEvaluator:
 
         logger.info(f"Running {len(valid_cases)} test cases with max {max_concurrent} concurrent")
 
+        if _TEST_LIMIT > 0:
+            random.shuffle(valid_cases) # Optional, since there's a limit over the number of cases
+
         # Create all tasks
         tasks = [self._eval_case_async(tc, i, semaphore) for i, tc in valid_cases]
 
         # Run in parallel
         valid_results = []
         valid_res_counter = 0
-        for coro in tqdm.as_completed(tasks, total=len(tasks), desc="Evaluating"):
+        for coro in tqdm.as_completed(
+            tasks, total=min(len(tasks), _TEST_LIMIT), desc="Evaluating"
+        ):
             result = await coro
             if not isinstance(result, Exception) and result["total_time"] != -1:
                 valid_results.append(result)
-                valid_res_counter +=1
+                valid_res_counter += 1
                 if len(valid_results) > 20:
                     logger.info("Writing batch to file...")
                     self.update_resuls(valid_results)
                     valid_results = []
+            if valid_res_counter == _TEST_LIMIT:
+                break
         if valid_results:
-            self.update_resuls(valid_results) 
+            self.update_resuls(valid_results)
 
         logger.info(f"Completed {valid_res_counter} successful tests")
 
@@ -299,6 +311,6 @@ if __name__ == "__main__":
     # print("TEST ENDS")
 
     print("TEST STARTS")
-    evaluator = ToolSelectionEvaluator(agent_type="filtering", max_tools=_NUM_TOOLS)
-    asyncio.run(evaluator.run_parallel_evaluation(max_concurrent=4))
+    evaluator = ToolSelectionEvaluator(agent_type="normal", max_tools=_NUM_TOOLS)
+    asyncio.run(evaluator.run_parallel_evaluation(max_concurrent=3))
     print("TEST ENDS")
