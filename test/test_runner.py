@@ -93,16 +93,16 @@ class ToolSelectionEvaluator:
         total_completion = 0
 
         message = response["messages"][-1]
-        # for message in response["messages"]:
-        if hasattr(message, "usage_metadata") and message.usage_metadata:
-            usage = message.usage_metadata
-            total_prompt += usage.get("input_tokens", 0)
-            total_completion += usage.get("output_tokens", 0)
-        # Check for response_metadata (alternative location)
-        elif hasattr(message, "response_metadata") and message.response_metadata:
-            usage = message.response_metadata.get("token_usage", {})
-            total_prompt += usage.get("prompt_tokens", 0)
-            total_completion += usage.get("completion_tokens", 0)
+        for message in response["messages"]:
+            if hasattr(message, "usage_metadata") and message.usage_metadata:
+                usage = message.usage_metadata
+                total_prompt += usage.get("input_tokens", 0)
+                total_completion += usage.get("output_tokens", 0)
+            # Check for response_metadata (alternative location)
+            elif hasattr(message, "response_metadata") and message.response_metadata:
+                usage = message.response_metadata.get("token_usage", {})
+                total_prompt += usage.get("prompt_tokens", 0)
+                total_completion += usage.get("completion_tokens", 0)
         return [total_prompt, total_completion, total_prompt + total_completion]
 
     def _eval_single_case(self, test_case, n):
@@ -311,6 +311,6 @@ if __name__ == "__main__":
     # print("TEST ENDS")
 
     print("TEST STARTS")
-    evaluator = ToolSelectionEvaluator(agent_type="normal", max_tools=_NUM_TOOLS)
-    asyncio.run(evaluator.run_parallel_evaluation(max_concurrent=3))
+    evaluator = ToolSelectionEvaluator(agent_type="filtering", max_tools=_NUM_TOOLS)
+    asyncio.run(evaluator.run_parallel_evaluation(max_concurrent=4))
     print("TEST ENDS")
