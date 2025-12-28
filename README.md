@@ -53,15 +53,17 @@ The results were measured by:
 2. The ratio between the test that passed to all the tests.
 3. The ratio between the test that had an accuracy score above 0.5 to all the tests.
 
-* Baseline (Agent with no Middleware)
+* Baseline (Normal Agent with no Middleware)
 ```
-Normal Agent Mean Accuracy: 77.84%
+Normal Agent Mean Accuracy: 67.91%
 
-Normal Agent test pass to all tests ratio: 95.01%
+Normal Agent test pass to all tests ratio: 92.00%
 
-Normal Agent above threshold accuracy ratio: 64.95%
+Normal Agent above threshold accuracy ratio: 51.60%
 
-Normal Agent Mean Total tokens: 10245.15
+Normal Agent Mean Total tokens: 24369.10
+
+Normal Agent Mean Time per Prompt: 81.25 sec
 ```
 
 * Embeddings Search:
@@ -73,23 +75,27 @@ Filtering Agent test pass to all tests ratio: 95.28%
 Filtering Agent above threshold accuracy ratio: 74.34%
 ```
 
-* BM25 Search:
+* BM25 Search (Filtering Agent)
 ```
-Filtering Agent Mean Accuracy: 83.68%
+Filtering Agent Mean Accuracy: 78.12%
 
-Filtering Agent test pass to all tests ratio: 94.26%
+Filtering Agent test pass to all tests ratio: 91.20%
 
-Filtering Agent above threshold accuracy ratio: 74.85%
+Filtering Agent above threshold accuracy ratio: 68.80%
 
-Filtering Agent Mean Total tokens: 4243.67
+Filtering Agent Mean Total tokens: 7477.96
+
+Filtering Agent Mean Time per Prompt: 104.93 sec
 ```
 
 ### Discussion
-As we can see, the Filtering agent (AKA the agent that is using the search-based tools selection) can actually improve the accuracy of the agent when using tools.
+As we can see, the Filtering agent (AKA the agent that is using the BM25 search-based tools selection) can actually improve the accuracy of the agent when using tools.
 
-1. About 6% Accuracy improvement and about 10% increase in the accuracy above threshold 0.5 means that the tool selection can work, and by improving the search technique, we might achieve better results.
+1. About 10% Accuracy improvement and about 17% increase in the accuracy above threshold 0.5 means that the tool selection can work, and by improving the search technique, we might achieve better results.
 
-2. Additional test that counted the total tokens shows dramatic decrese of 60%. 
+2. Additional test that counted the total tokens shows dramatic decrease of ~69%.
+
+3. The mean time per prompt is ~29% higher for the Filtering Agent (104.93 sec vs 81.25 sec). This overhead comes from the BM25 search step that runs before each agent call. However, in production environments with API-based LLMs, the token reduction would likely offset this overhead, as fewer tokens mean faster inference and lower costs. 
 
 ## Restrictions 
 * I run this program locally using LM-Studio LLM `meta-llama-3.1-8b-instruct-128k` on a M4 Mac.
