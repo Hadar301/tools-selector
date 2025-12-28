@@ -17,7 +17,7 @@ sys.path.append("../../tools-selector")
 from bm_search import get_search_engine
 from embeddings import cosine_similarity, embed_text
 
-_NUM_TOOLS: int = 100
+_NUM_TOOLS: int = 30
 
 _TOOLS_EMBEDDINGS: Dict[str, torch.Tensor] = get_tools_embeddings()
 _all_tools_embeds = torch.stack(list(_TOOLS_EMBEDDINGS.values())).squeeze(1)
