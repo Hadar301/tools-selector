@@ -85,7 +85,7 @@ Filtering Agent above threshold accuracy ratio: 68.80%
 
 Filtering Agent Mean Total tokens: 7477.96
 
-Filtering Agent Mean Time per Prompt: 104.93 sec
+Filtering Agent Mean Time per Prompt: 82.21 sec
 ```
 
 ### Discussion
@@ -95,7 +95,6 @@ As we can see, the Filtering agent (AKA the agent that is using the BM25 search-
 
 2. Additional test that counted the total tokens shows dramatic decrease of ~69%.
 
-3. The mean time per prompt is ~29% higher for the Filtering Agent (104.93 sec vs 81.25 sec). This overhead comes from the BM25 search step that runs before each agent call. However, in production environments with API-based LLMs, the token reduction would likely offset this overhead, as fewer tokens mean faster inference and lower costs. 
 
 ## Restrictions 
 * I run this program locally using LM-Studio LLM `meta-llama-3.1-8b-instruct-128k` on a M4 Mac.
