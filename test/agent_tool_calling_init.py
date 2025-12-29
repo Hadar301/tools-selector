@@ -129,7 +129,7 @@ def find_top_tools_bm_search(human_message: str, threshold: float = 0.25) -> Lis
 def filter_request_tools(
     request_tools: List[StructuredTool], relevant_tools: List[str]
 ) -> List[StructuredTool]:
-    return [t for t in request_tools if t.name in relevant_tools]
+    return [t for t in request_tools if t.name in set(relevant_tools)]
 
 
 @wrap_model_call
