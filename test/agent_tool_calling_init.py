@@ -155,7 +155,8 @@ async def filter_tools_async(request: Any, handler: Callable[[Any], Awaitable[An
     # print(len(top_tools))
     req_tools = getattr(request, "tools", [])
     filtered_request_tools = filter_request_tools(req_tools, top_tools)
-    setattr(request, "tools", filtered_request_tools)
+    # setattr(request, "tools", filtered_request_tools)
+    request.override(tools=filtered_request_tools)
 
     return await handler(request)
 
