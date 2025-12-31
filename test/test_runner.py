@@ -13,6 +13,7 @@ from agent_tool_calling_init import (
     initialize_filtered_agent,
 )
 from loguru import logger
+from tenacity import retry, stop_after_attempt, wait_exponential
 from tqdm.asyncio import tqdm
 
 logger.remove()
@@ -201,7 +202,7 @@ class ToolSelectionEvaluator:
             results = []
 
     #### Async tests ####
-
+    @retry(stop=stop_after_attempt(3), wait=wait_exponential(multiplier=1, min=1, max=10))
     async def _eval_case_async(self, test_case, n, semaphore: asyncio.Semaphore):
         """Async version of _eval_single_case"""
         async with semaphore:
@@ -277,7 +278,7 @@ class ToolSelectionEvaluator:
         logger.info(f"Running {len(valid_cases)} test cases with max {max_concurrent} concurrent")
 
         if _TEST_LIMIT > 0:
-            random.shuffle(valid_cases) # Optional, since there's a limit over the number of cases
+            random.shuffle(valid_cases)  # Optional, since there's a limit over the number of cases
 
         # Create all tasks
         tasks = [self._eval_case_async(tc, i, semaphore) for i, tc in valid_cases]
