@@ -202,7 +202,7 @@ class ToolSelectionEvaluator:
             results = []
 
     #### Async tests ####
-    @retry(stop=stop_after_attempt(3), wait=wait_exponential(multiplier=1, min=1, max=10))
+    @retry(stop=stop_after_attempt(4), wait=wait_exponential(multiplier=1, min=1, max=10), sleep=5)
     async def _eval_case_async(self, test_case, n, semaphore: asyncio.Semaphore):
         """Async version of _eval_single_case"""
         async with semaphore:
