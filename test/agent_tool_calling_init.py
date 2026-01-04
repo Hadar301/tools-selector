@@ -121,6 +121,10 @@ def find_top_tools_bm_search(human_message: str, threshold: float = 0.25) -> Lis
     # print(f"total scores: {len(scores)} max score: {np.max(scores)}")
     normalized_scores = process_scores(scores)
 
+    # k=5 
+    # top_k_values_unsorted = np.partition(normalized_scores, -k)[-k:]
+    # print(f"Top {k} values (unsorted): {top_k_values_unsorted}")
+
     indices = np.where(normalized_scores >= threshold)[0]
     # print(f"all idexes: {indices}")
     return [_all_tools[i] for i in indices.tolist()]
@@ -129,7 +133,7 @@ def find_top_tools_bm_search(human_message: str, threshold: float = 0.25) -> Lis
 def filter_request_tools(
     request_tools: List[StructuredTool], relevant_tools: List[str]
 ) -> List[StructuredTool]:
-    return [t for t in get_generated_tools()[:_NUM_TOOLS] if t.name in set(relevant_tools)]
+    return [t for t in request_tools if t.name in set(relevant_tools)]
 
 
 @wrap_model_call
@@ -151,7 +155,7 @@ async def filter_tools_async(request: Any, handler: Callable[[Any], Awaitable[An
     messages = getattr(request, "messages", [])
     human_message = get_human_content(messages)
     # top_tools = find_top_tools_embeddings(human_message)
-    top_tools = find_top_tools_bm_search(human_message, threshold=0.7)
+    top_tools = find_top_tools_bm_search(human_message, threshold=0.85)
     # print(len(top_tools))
     req_tools = getattr(request, "tools", [])
     filtered_request_tools = filter_request_tools(req_tools, top_tools)
