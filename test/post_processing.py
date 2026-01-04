@@ -30,7 +30,7 @@ def calculate_accruacy_above_thresh_ratio(file_path: str, threshold: float) -> n
     accuracies = np.array([r["accuracy"] for r in results])
     above_accoracies = np.where(accuracies > threshold, 1, 0)
 
-    return np.sum(above_accoracies) / len(above_accoracies)
+    return np.mean(above_accoracies)
 
 
 def calculate_mean_tokens(file_path: str) -> np.float32:
